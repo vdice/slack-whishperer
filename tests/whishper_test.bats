@@ -17,8 +17,8 @@ strip-ws() {
 }
 
 @test "whishper" {
-  channel="test-channel"
-  message="test-message"
+  channel="#test-channel"
+  message="test message"
 
   run whishper "${channel}" "${message}"
 
@@ -63,7 +63,7 @@ strip-ws() {
 }
 
 @test "whishper: necessary vars: no message" {
-  channel="test-channel"
+  channel="#test-channel"
 
   run whishper "${channel}"
 
