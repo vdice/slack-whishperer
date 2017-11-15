@@ -4,6 +4,7 @@ setup() {
   . "${BATS_TEST_DIRNAME}/../scripts/whishper.sh"
   load stub
   stub curl
+
   SLACK_INCOMING_WEBHOOK_URL=mysecretslackwebhookurl
   USAGE='Usage: SLACK_INCOMING_WEBHOOK_URL=topsecret whishper.sh <channel> <message>'
 }
@@ -16,7 +17,7 @@ strip-ws() {
   echo -e "${1}" | tr -d '[[:space:]]'
 }
 
-@test "whishper" {
+@test "whishper: happy path" {
   channel="#test-channel"
   message="test message"
 
@@ -33,6 +34,30 @@ strip-ws() {
   '
 
   [ "${status}" -eq 0 ]
+  [ "$(strip-ws "${output}")" == "$(strip-ws "${expected_output}")" ]
+}
+
+@test "whishper: sad path" {
+  channel="#test-channel"
+  message="test message"
+
+  curl_error='curl: (22) The requested URL returned error: 404'
+  stub curl "echo '${curl_error}'" 22
+
+  run whishper "${channel}" "${message}"
+
+  expected_data='
+    {"channel":"'"${channel}"'",
+    "text":"'"${message}"'"}
+  '
+
+  expected_output='
+    Notifying Slack with the following data:
+    '${expected_data}'
+    '${curl_error}'
+  '
+
+  [ "${status}" -eq 22 ]
   [ "$(strip-ws "${output}")" == "$(strip-ws "${expected_output}")" ]
 }
 

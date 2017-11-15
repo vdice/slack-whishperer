@@ -22,7 +22,7 @@ whishper() {
   { echo "Notifying Slack with the following data:"; \
     echo "${data}"; } >&2
 
-  curl \
+  curl -sSf \
     -X POST -H 'Content-type: application/json' \
     --data "${data}" \
     "${SLACK_INCOMING_WEBHOOK_URL}"
