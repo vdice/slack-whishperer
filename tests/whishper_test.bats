@@ -4,6 +4,8 @@ setup() {
   . "${BATS_TEST_DIRNAME}/../scripts/whishper.sh"
   load stub
   stub curl
+  SLACK_INCOMING_WEBHOOK_URL=mysecretslackwebhookurl
+  USAGE='Usage: SLACK_INCOMING_WEBHOOK_URL=topsecret whishper.sh <channel> <message>'
 }
 
 teardown() {
@@ -31,5 +33,45 @@ strip-ws() {
   '
 
   [ "${status}" -eq 0 ]
+  [ "$(strip-ws "${output}")" == "$(strip-ws "${expected_output}")" ]
+}
+
+@test "whishper: necessary vars: no SLACK_INCOMING_WEBHOOK_URL" {
+  unset SLACK_INCOMING_WEBHOOK_URL
+
+  run whishper
+
+  expected_output='
+    Missing SLACK_INCOMING_WEBHOOK_URL in env
+    '${USAGE}'
+  '
+
+  [ "${status}" -eq 1 ]
+  [ "$(strip-ws "${output}")" == "$(strip-ws "${expected_output}")" ]
+}
+
+@test "whishper: necessary vars: no channel" {
+  run whishper
+
+  expected_output='
+    Missing channel in env
+    '${USAGE}'
+  '
+
+  [ "${status}" -eq 1 ]
+  [ "$(strip-ws "${output}")" == "$(strip-ws "${expected_output}")" ]
+}
+
+@test "whishper: necessary vars: no message" {
+  channel="test-channel"
+
+  run whishper "${channel}"
+
+  expected_output='
+    Missing message in env
+    '${USAGE}'
+  '
+
+  [ "${status}" -eq 1 ]
   [ "$(strip-ws "${output}")" == "$(strip-ws "${expected_output}")" ]
 }
