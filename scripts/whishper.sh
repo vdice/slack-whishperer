@@ -22,10 +22,26 @@ whishper() {
   { echo "Notifying Slack with the following data:"; \
     echo "${data}"; } >&2
 
-  curl -sSf \
-    -X POST -H 'Content-type: application/json' \
-    --data "${data}" \
-    "${SLACK_INCOMING_WEBHOOK_URL}"
+  cmd="
+    curl -sSf \
+      -o /dev/null \
+      -w '%{http_code}\n' \
+      -X POST -H 'Content-type: application/json' \
+      --data '${data}' \
+      ${SLACK_INCOMING_WEBHOOK_URL}
+  "
+
+  if ! status="$(eval "${cmd}")"; then
+    echo "Message failed to be whishpered :(" >&2
+    return 1
+  fi
+
+  if ! [[ "${status}" == '200' ]]; then
+    echo "Unexpected HTTP Code (${status}); please check webhook url and try again" >&2
+    return 1
+  fi
+
+  echo "Message successfully whishpered!" >&2
 }
 
 usage() {
