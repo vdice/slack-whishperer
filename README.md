@@ -9,7 +9,10 @@ ______
 
 ```shell
 source scripts/whishper.sh
-whishper
+
+export SLACK_INCOMING_WEBHOOK_URL=avocadosslackchannelwebhookurl
+
+whishper '#avocados' 'Who brought the avocados?'
 ```
 
 Dev
