@@ -1,0 +1,16 @@
+name: PR
+
+on: [pull_request]
+
+jobs:
+  build:
+    name: Build/Test 
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_BUILD_OPTS:
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+
+      - name: Build/Test
+        run: make build test

@@ -1,0 +1,24 @@
+name: ci
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  publish:
+    name: Publish image to the ghcr.io Docker Registry
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+  
+      - name: Build/Test
+        run: make build test
+
+      - name: Docker login
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | \
+          docker login ghcr.io -u $ --password-stdin
+
+      - name: Publish
+        run: make push 

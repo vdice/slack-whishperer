@@ -18,14 +18,12 @@ strip-ws() {
 }
 
 @test "whishper: happy path" {
-  channel="#test-channel"
   message="test message"
 
-  run whishper "${channel}" "${message}"
+  run whishper "${message}"
 
   expected_data='
-    {"channel":"'"${channel}"'",
-    "text":"'"${message}"'"}
+    {"text":"'"${message}"'"}
   '
 
   expected_output='
@@ -39,16 +37,14 @@ strip-ws() {
 }
 
 @test "whishper: sad path: curl fails" {
-  channel="#test-channel"
   message="test message"
 
   stub curl "echo 'curl: (22) The requested URL returned error: 404'" 22
 
-  run whishper "${channel}" "${message}"
+  run whishper "${message}"
 
   expected_data='
-    {"channel":"'"${channel}"'",
-    "text":"'"${message}"'"}
+    {"text":"'"${message}"'"}
   '
 
   expected_output='
@@ -62,16 +58,14 @@ strip-ws() {
 }
 
 @test "whishper: sad path: unexpected http code" {
-  channel="#test-channel"
   message="test message"
 
   stub curl "echo '302'" 0
 
-  run whishper "${channel}" "${message}"
+  run whishper "${message}"
 
   expected_data='
-    {"channel":"'"${channel}"'",
-    "text":"'"${message}"'"}
+    {"text":"'"${message}"'"}
   '
 
   expected_output='
@@ -90,19 +84,7 @@ strip-ws() {
   run whishper
 
   expected_output='
-    Missing SLACK_INCOMING_WEBHOOK_URL in env
-    '${USAGE}'
-  '
-
-  [ "${status}" -eq 1 ]
-  [ "$(strip-ws "${output}")" == "$(strip-ws "${expected_output}")" ]
-}
-
-@test "whishper: necessary vars: no channel" {
-  run whishper
-
-  expected_output='
-    Missing channel in env
+    Missing value for SLACK_INCOMING_WEBHOOK_URL
     '${USAGE}'
   '
 
@@ -111,12 +93,10 @@ strip-ws() {
 }
 
 @test "whishper: necessary vars: no message" {
-  channel="#test-channel"
-
-  run whishper "${channel}"
+  run whishper
 
   expected_output='
-    Missing message in env
+    Missing value for message
     '${USAGE}'
   '
 

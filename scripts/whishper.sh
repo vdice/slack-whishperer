@@ -1,22 +1,21 @@
 #!/usr/bin/env bash
+set -eo pipefail
 
-# whishper sends the provided message to the provided slack channel
-# using the incoming-webhook url expected to be defined in the job environment
+# whishper sends the provided message to the slack channel associated with
+# the incoming-webhook url expected to be defined in the job environment
 whishper() { 
-  channel="${1}"
-  message="${2}"
+  message="${1}"
 
-  for necessary_var in SLACK_INCOMING_WEBHOOK_URL channel message; do
+  for necessary_var in SLACK_INCOMING_WEBHOOK_URL message; do
     if [[ "${!necessary_var}" == "" ]]; then
-      echo "Missing ${necessary_var} in env"
+      echo "Missing value for ${necessary_var}"
       usage
       return 1
     fi
   done
 
   data='
-    {"channel":"'"${channel}"'",
-    "text":"'"${message}"'"}
+    {"text":"'"${message}"'"}
   '
 
   { echo "Notifying Slack with the following data:"; \
@@ -47,3 +46,5 @@ whishper() {
 usage() {
   echo "Usage: SLACK_INCOMING_WEBHOOK_URL=topsecret whishper.sh <channel> <message>"
 }
+
+"$@"
