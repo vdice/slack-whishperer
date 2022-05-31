@@ -1,12 +1,12 @@
 #!/usr/bin/env bats
 
 setup() {
-  . "${BATS_TEST_DIRNAME}/../scripts/whishper.sh"
   load stub
   stub curl "echo '200'" 0
+  stub jq "echo '{\"text\":\"test\nmessage\"}'" 0
 
-  SLACK_INCOMING_WEBHOOK_URL=mysecretslackwebhookurl
-  USAGE='Usage: SLACK_INCOMING_WEBHOOK_URL=topsecret whishper.sh <channel> <message>'
+  export SLACK_INCOMING_WEBHOOK_URL=mysecretslackwebhookurl
+  USAGE='Usage: SLACK_INCOMING_WEBHOOK_URL=topsecret whishper.sh path/to/message'
 }
 
 teardown() {
@@ -18,12 +18,12 @@ strip-ws() {
 }
 
 @test "whishper: happy path" {
-  message="test message"
+  message_file="$(mktemp)"
 
-  run whishper "${message}"
+  run ./scripts/whishper.sh "${message_file}"
 
   expected_data='
-    {"text":"'"${message}"'"}
+    {"text":"test\nmessage"}
   '
 
   expected_output='
@@ -37,14 +37,14 @@ strip-ws() {
 }
 
 @test "whishper: sad path: curl fails" {
-  message="test message"
+  message_file="$(mktemp)"
 
   stub curl "echo 'curl: (22) The requested URL returned error: 404'" 22
 
-  run whishper "${message}"
+  run ./scripts/whishper.sh "${message_file}"
 
   expected_data='
-    {"text":"'"${message}"'"}
+    {"text":"test\nmessage"}
   '
 
   expected_output='
@@ -58,14 +58,14 @@ strip-ws() {
 }
 
 @test "whishper: sad path: unexpected http code" {
-  message="test message"
+  message_file="$(mktemp)"
 
   stub curl "echo '302'" 0
 
-  run whishper "${message}"
+  run ./scripts/whishper.sh "${message_file}"
 
   expected_data='
-    {"text":"'"${message}"'"}
+    {"text":"test\nmessage"}
   '
 
   expected_output='
@@ -78,13 +78,22 @@ strip-ws() {
   [ "$(strip-ws "${output}")" == "$(strip-ws "${expected_output}")" ]
 }
 
+@test "whishper: sad path: can't read message" {
+  run ./scripts/whishper.sh no-exist
+
+  expected_output="cat: can't open 'no-exist': No such file or directory"
+
+  [ "${status}" -eq 1 ]
+  [ "$(strip-ws "${output}")" == "$(strip-ws "${expected_output}")" ]
+}
+
 @test "whishper: necessary vars: no SLACK_INCOMING_WEBHOOK_URL" {
   unset SLACK_INCOMING_WEBHOOK_URL
 
-  run whishper
+  run ./scripts/whishper.sh
 
   expected_output='
-    Missing value for SLACK_INCOMING_WEBHOOK_URL
+    Missing SLACK_INCOMING_WEBHOOK_URL in env
     '${USAGE}'
   '
 
@@ -93,10 +102,10 @@ strip-ws() {
 }
 
 @test "whishper: necessary vars: no message" {
-  run whishper
+  run ./scripts/whishper.sh
 
   expected_output='
-    Missing value for message
+    A path to the message file needs to be provided
     '${USAGE}'
   '
 
