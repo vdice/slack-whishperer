@@ -8,6 +8,8 @@ jobs:
   publish:
     name: Publish image to the ghcr.io Docker Registry
     runs-on: ubuntu-latest
+    env:
+      DOCKER_BUILD_OPTS:
     steps:
       - name: Check out the repo
         uses: actions/checkout@v2
